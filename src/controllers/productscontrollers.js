@@ -12,39 +12,36 @@ const getProducts = async (req, res) => {
     }
 };
 
-// Crear un nuevo producto
-    const createProduct = async (req, res) => {
-        const { Name_producto, Precio, Existencia = 0, ID_Maquina } = req.body;
-    
-        if (!Name_producto || Existencia == null) {
-            return res.status(400).json({ error: "Faltan campos obligatorios" });
-        }
-    
-        try {
-            const pool = await getConnection();
-            const tableName = "[Products-Mache]";
-    
-            const result = await pool
-                .request()
-                .input("Name_producto", sql.VarChar, Name_producto)
-                .input("Precio", sql.Decimal, Precio)
-                .input("Existencia", sql.Int, Existencia)
-                .input("ID_Maquina", sql.Int, ID_Maquina)
-                .query(
-                    `INSERT INTO [Products-Mache] (Name_producto, Precio, Existencia,ID_Maquina ) VALUES (@Name_producto, @Precio, @Existencia, @ID_Maquina);`
-                );
-                    console.log(result);
-                    res.json(  Name_producto,Precio, Existencia);
-            //res.status(201).json({
-                //id: result.recordset[0].id,
-                //Name_producto,
-                //Precio,
-                //Existencia
-           // });
-        } catch (error) {
-            res.status(500).json({ error: "Error al crear el producto", message: error.message });
-        }
-    };
+const createProduct = async (req, res) => {
+  const { Name_producto, Precio, Existencia, ID_Maquina } = req.body;
+
+  if (!Name_producto || Precio == null || Existencia == null || ID_Maquina == null) {
+      return res.status(400).json({ error: "Faltan campos obligatorios" });
+  }
+
+  try {
+      const pool = await getConnection();
+      const result = await pool
+          .request()
+          .input("Name_producto", sql.VarChar, Name_producto)
+          .input("Precio", sql.Decimal(10, 2), Precio)
+          .input("Existencia", sql.Int, Existencia)
+          .input("ID_Maquina", sql.Int, ID_Maquina)
+          .query(
+              `INSERT INTO [Products-Mache] (Name_producto, Precio, Existencia, ID_Maquina) VALUES (@Name_producto, @Precio, @Existencia, @ID_Maquina); SELECT SCOPE_IDENTITY() AS id;`
+          );
+
+      res.status(201).json({
+          id: result.recordset[0].id,
+          Name_producto,
+          Precio,
+          Existencia,
+          ID_Maquina
+      });
+  } catch (error) {
+      res.status(500).json({ error: "Error al crear el producto", message: error.message });
+  }
+};
 
 // Eliminar un producto por su ID
 const deleteProduct = async (req, res) => {
